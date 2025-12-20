@@ -1,0 +1,178 @@
+name: CI Pipeline - Build & Push
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'application/**'
+      - 'helm-charts/**'
+      - '.github/workflows/ci-pipeline.yml'
+  pull_request:
+    branches: [main]
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REGISTRY: 123456789012.dkr.ecr.us-east-1.amazonaws.com
+  BACKEND_REPO: mern-backend
+  FRONTEND_REPO: mern-frontend
+
+jobs:
+  # ========== DETECT CHANGES ==========
+  detect-changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'application/backend/**'
+            frontend:
+              - 'application/frontend/**'
+
+  # ========== BUILD & DEPLOY ==========
+  build-and-push:
+    name: Build & Push Images
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true'
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # ========== BACKEND ==========
+      - name: Backend - Install & Test
+        if: needs.detect-changes.outputs.backend == 'true'
+        working-directory: ./application/backend
+        run: |
+          echo "======================================"
+          echo "Processing Backend..."
+          echo "======================================"
+          npm ci
+          echo "Tests will be added later"
+          # npm run test
+          # npm run lint
+
+      - name: Backend - Build & Push
+        if: needs.detect-changes.outputs.backend == 'true'
+        working-directory: ./application/backend
+        run: |
+          IMAGE_TAG=${{ github.sha }}
+          echo "Building backend image: $IMAGE_TAG"
+          
+          docker build -t ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_REPO }}:$IMAGE_TAG .
+          docker tag ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_REPO }}:$IMAGE_TAG \
+                     ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_REPO }}:latest
+          
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_REPO }}:$IMAGE_TAG
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_REPO }}:latest
+          
+          echo "Backend image pushed!"
+
+      # ========== FRONTEND ==========
+      - name: Frontend - Install & Test
+        if: needs.detect-changes.outputs.frontend == 'true'
+        working-directory: ./application/frontend
+        run: |
+          echo "======================================"
+          echo "Processing Frontend..."
+          echo "======================================"
+          npm ci
+          echo "Tests will be added later"
+          # npm run test -- --watchAll=false
+          # npm run lint
+          # npm run build
+
+      - name: Frontend - Build & Push
+        if: needs.detect-changes.outputs.frontend == 'true'
+        working-directory: ./application/frontend
+        run: |
+          IMAGE_TAG=${{ github.sha }}
+          echo "Building frontend image: $IMAGE_TAG"
+          
+          docker build -t ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_REPO }}:$IMAGE_TAG .
+          docker tag ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_REPO }}:$IMAGE_TAG \
+                     ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_REPO }}:latest
+          
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_REPO }}:$IMAGE_TAG
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_REPO }}:latest
+          
+          echo "Frontend image pushed!"
+
+      # ========== UPDATE HELM VALUES ==========
+      - name: Update Helm Values
+        run: |
+          IMAGE_TAG=${{ github.sha }}
+          
+          if [[ "${{ needs.detect-changes.outputs.backend }}" == "true" ]]; then
+            sed -i "/backend:/,/tag:/ s|tag: .*|tag: $IMAGE_TAG|" helm-charts/mern-app/values.yaml
+            echo "Updated backend tag to: $IMAGE_TAG"
+          fi
+          
+          if [[ "${{ needs.detect-changes.outputs.frontend }}" == "true" ]]; then
+            sed -i "/frontend:/,/tag:/ s|tag: .*|tag: $IMAGE_TAG|" helm-charts/mern-app/values.yaml
+            echo "Updated frontend tag to: $IMAGE_TAG"
+          fi
+          
+          echo ""
+          echo "====== Updated values.yaml ======"
+          cat helm-charts/mern-app/values.yaml
+
+      - name: Commit & Push Changes
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add helm-charts/mern-app/values.yaml
+          
+          COMMIT_MSG=""
+          if [[ "${{ needs.detect-changes.outputs.backend }}" == "true" ]] && [[ "${{ needs.detect-changes.outputs.frontend }}" == "true" ]]; then
+            COMMIT_MSG="Update backend & frontend images to ${{ github.sha }}"
+          elif [[ "${{ needs.detect-changes.outputs.backend }}" == "true" ]]; then
+            COMMIT_MSG="Update backend image to ${{ github.sha }}"
+          elif [[ "${{ needs.detect-changes.outputs.frontend }}" == "true" ]]; then
+            COMMIT_MSG="Update frontend image to ${{ github.sha }}"
+          fi
+          
+          git commit -m "$COMMIT_MSG" || echo "No changes to commit"
+          git push origin ${{ github.ref_name }} || echo "Push skipped"
+
+      # ========== SUMMARY ==========
+      - name: Pipeline Summary
+        if: always()
+        run: |
+          echo "======================================"
+          echo "CI Pipeline Completed!"
+          echo "======================================"
+          echo "Backend Built: ${{ needs.detect-changes.outputs.backend == 'true' && 'Done' || '⏭Skipped' }}"
+          echo "Frontend Built: ${{ needs.detect-changes.outputs.frontend == 'true' && 'Done' || '⏭Skipped' }}"
+          echo ""
+          echo "Image Tag: ${{ github.sha }}"
+          echo ""
+          echo "ArgoCD will now:"
+          echo "  • Detect values.yaml changes"
+          echo "  • Sync Helm chart"
+          echo "  • Deploy to EKS"
+          echo "======================================"

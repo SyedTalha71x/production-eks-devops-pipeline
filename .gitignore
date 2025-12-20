@@ -1,0 +1,113 @@
+# ========== TERRAFORM IGNORE ==========
+.DS_Store
+*.tfvars
+.terraform
+*.tfstate*
+*.lock.hcl
+*.log
+.vscode
+reports
+env
+oss-output
+kubeconfig_*
+.idea
+node_modules
+dist
+.venv
+
+ort-build
+
+# ========== HELM CHARTS IGNORE ==========
+Chart.lock
+**/charts/*.tgz
+**/charts/*.tar.gz
+*.tgz
+*.tar.gz
+# Helm dependency packages
+helm-charts/mern-app/charts/
+
+# ========== NX/ANGULAR ==========
+.nx/cache
+.nx/workspace-data
+
+# ========== MISC ==========
+screenshots
+
+# ========== DEVENV ==========
+# Devenv
+.devenv*
+devenv.local.nix
+
+# ========== DIRENV ==========
+# direnv
+.direnv
+
+# ========== PRE-COMMIT ==========
+.pre-commit-config.yaml
+
+# ========== TERRAFORM SPECIFIC ==========
+/terraform/eks/default/keys/*
+/terraform/eks/default/.terraform
+/terraform/eks/default/.terraform.lock.hcl
+/terraform/eks/default/.terraform.tfstate
+/terraform/eks/default/.terraform.tfstate.backup
+
+# ========== APPLICATION FILES ==========
+/application/frontend/env
+/application/frontend/.env
+/application/frontend/.env.local
+/application/frontend/.env.production
+/application/backend/.env
+/application/backend/.env.local
+/application/backend/.env.production
+
+# ========== DOCKER & KUBERNETES ==========
+# Kubernetes configs
+*.kubeconfig
+config
+kubeconfig
+
+# Docker
+docker-compose.override.yml
+
+# ========== LOGS ==========
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# ========== OPERATING SYSTEM ==========
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ========== IDE ==========
+*.swp
+*.swo
+*~
+.project
+*.tmproj
+*.sublime-workspace
+*.code-workspace
+
+# ========== TEST COVERAGE ==========
+coverage/
+*.lcov
+
+# ========== PRODUCTION BUILDS ==========
+build/
+dist/
+out/
+.next/
+.nuxt/
+.cache/
+
+# ========== DEPENDENCIES ==========
+# Dependencies
+node_modules/
+jspm_packages/
+
+# ========== TYPESCRIPT ==========
+*.tsbuildinfo
