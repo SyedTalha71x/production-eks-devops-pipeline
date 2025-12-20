@@ -8,7 +8,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/YOUR_USERNAME/mern-devops-project.git
+    repoURL: https://github.com/SyedTalha71x/production-eks-devops-pipeline
     targetRevision: HEAD
     path: helm-charts/mern-app
     helm:
