@@ -8,5 +8,5 @@ connectDB();
 const PORT = process.env.PORT || 5008;
 
 app.listen(PORT, () => {
-  console.log(`Backend runningggggggg on port ${PORT}`);
+  console.log(`Backend runninggggg on port ${PORT}`);
 });
