@@ -78,3 +78,46 @@ variable "kms_key_deletion_window" {
   type        = number
   default     = 7
 }
+
+variable "cluster_name" {
+  description = "Name of the EKS cluster"
+  type        = string
+  
+}
+
+variable "desired_capacity" {
+  description = "Desired number of worker nodes"
+  type        = number
+}
+
+variable "max_capacity" {
+  description = "Maximum number of worker nodes"
+  type        = number
+}
+
+variable "min_capacity" {
+  description = "Minimum number of worker nodes"
+  type        = number
+}
+
+variable "instance_types" {
+  description = "List of instance types for worker nodes"
+  type        = list(string)
+}
+
+variable "capacity_type" {
+  description = "Capacity type for worker nodes (ON_DEMAND or SPOT)"
+  type        = string 
+}
+
+variable "disk_size" {
+  description = "Disk size for worker nodes in GB"
+  type        = number
+}
+
+variable "node_labels" {
+  description = "Labels to apply to worker nodes"
+  type        = map(string)
+  
+}
+

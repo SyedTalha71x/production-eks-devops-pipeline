@@ -42,7 +42,14 @@ module "eks_cluster" {
   enable_cluster_logging     = var.enable_cluster_logging
   cloudwatch_log_group_name  = module.monitoring.cloudwatch_log_group_name
   
-  eks_auto_mode_policies     = local.eks_auto_mode_policies
+  # Node group configuration
+  desired_capacity           = var.desired_capacity
+  min_capacity               = var.min_capacity
+  max_capacity               = var.max_capacity
+  instance_types             = var.instance_types
+  capacity_type              = var.capacity_type
+  disk_size                  = var.disk_size
+  node_labels                = var.node_labels
   
   tags                       = local.common_tags
   
@@ -51,4 +58,3 @@ module "eks_cluster" {
     module.monitoring
   ]
 }
-

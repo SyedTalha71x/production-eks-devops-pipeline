@@ -1,30 +1,10 @@
 # =========================
-# EKS Cluster
+# EKS Cluster with Managed Node Groups
 # =========================
 resource "aws_eks_cluster" "main" {
   name     = var.cluster_name
   role_arn = aws_iam_role.cluster.arn
   version  = var.kubernetes_version
-
-  bootstrap_self_managed_addons = false
-
-  compute_config {
-    enabled       = true
-    node_pools    = ["general-purpose", "system"]
-    node_role_arn = aws_iam_role.cluster.arn
-  }
-
-  storage_config {
-    block_storage {
-      enabled = true
-    }
-  }
-
-  kubernetes_network_config {
-    elastic_load_balancing {
-      enabled = true
-    }
-  }
 
   vpc_config {
     subnet_ids              = var.subnet_ids
@@ -42,11 +22,13 @@ resource "aws_eks_cluster" "main" {
     "scheduler"
   ] : []
 
+  # Access config
   access_config {
     authentication_mode                         = "API_AND_CONFIG_MAP"
     bootstrap_cluster_creator_admin_permissions = true
   }
 
+  # Encryption
   encryption_config {
     provider {
       key_arn = var.kms_key_arn
@@ -61,46 +43,48 @@ resource "aws_eks_cluster" "main" {
   ]
 }
 
+
+
 # =========================
-# Nodegroup: System
+# Managed Node Group
 # =========================
-resource "aws_eks_node_group" "system" {
+resource "aws_eks_node_group" "main" {
   cluster_name    = aws_eks_cluster.main.name
-  node_group_name = "system"
-  node_role_arn   = aws_iam_role.cluster.arn
+  node_group_name = "${var.cluster_name}-node-group"
+  node_role_arn   = aws_iam_role.nodes.arn
   subnet_ids      = var.subnet_ids
 
+  # Scaling configuration
   scaling_config {
-    desired_size = 2
-    min_size     = 1
-    max_size     = 3
+    desired_size = var.desired_capacity
+    max_size     = var.max_capacity
+    min_size     = var.min_capacity
   }
 
-  instance_types = ["t3.small"]
+  # Instance types
+  instance_types = var.instance_types
+  capacity_type  = var.capacity_type # ON_DEMAND or SPOT
+  disk_size      = var.disk_size
 
-  depends_on = [
-    aws_eks_cluster.main
-  ]
-}
-
-# =========================
-# Nodegroup: General Purpose
-# =========================
-resource "aws_eks_node_group" "general_purpose" {
-  cluster_name    = aws_eks_cluster.main.name
-  node_group_name = "general-purpose"
-  node_role_arn   = aws_iam_role.cluster.arn
-  subnet_ids      = var.subnet_ids
-
-  scaling_config {
-    desired_size = 2
-    min_size     = 1
-    max_size     = 3
+  # Update configuration
+  update_config {
+    max_unavailable = 1
   }
 
-  instance_types = ["t3.small"]
+  labels = var.node_labels
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.cluster_name}-node-group"
+    }
+  )
 
   depends_on = [
-    aws_eks_cluster.main
+    aws_iam_role_policy_attachment.nodes_policies
   ]
+
+  lifecycle {
+    ignore_changes = [scaling_config[0].desired_size]
+  }
 }

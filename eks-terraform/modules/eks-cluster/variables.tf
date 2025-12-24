@@ -53,12 +53,45 @@ variable "cloudwatch_log_group_name" {
   type        = string
 }
 
-variable "eks_auto_mode_policies" {
-  description = "List of IAM policies for Auto Mode"
-  type        = list(string)
-}
 
 variable "tags" {
   description = "Tags to apply to resources"
   type        = map(string)
 }
+
+variable "desired_capacity" {
+  description = "Desired number of worker nodes"
+  type        = number
+}
+
+variable "max_capacity" {
+  description = "Maximum number of worker nodes"
+  type        = number
+}
+
+variable "min_capacity" {
+  description = "Minimum number of worker nodes"
+  type        = number
+}
+
+variable "instance_types" {
+  description = "List of instance types for worker nodes"
+  type        = list(string)
+}
+
+variable "capacity_type" {
+  description = "Capacity type for worker nodes (ON_DEMAND or SPOT)"
+  type        = string 
+}
+
+variable "disk_size" {
+  description = "Disk size for worker nodes in GB"
+  type        = number
+}
+
+variable "node_labels" {
+  description = "Labels to apply to worker nodes"
+  type        = map(string)
+  
+}
+
