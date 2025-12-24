@@ -142,9 +142,15 @@ jobs:
           cat helm-charts/mern-app/values.yaml
 
       - name: Commit & Push Changes
+        env: 
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
+
+
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
+
           git add helm-charts/mern-app/values.yaml
           
           COMMIT_MSG=""
