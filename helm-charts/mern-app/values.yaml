@@ -5,10 +5,10 @@ global:
 
 # Frontend Configuration
 frontend:
-  replicaCount: 2
+  replicaCount: 1
   image:
-    repository: 123456789012.dkr.ecr.us-east-1.amazonaws.com/mern-frontend
-    tag: latest
+    repository: 121775527711.dkr.ecr.us-east-1.amazonaws.com/mern-frontend
+    tag: v1.3
     pullPolicy: IfNotPresent
   service:
     type: NodePort
@@ -29,10 +29,10 @@ frontend:
 
 # Backend Configuration
 backend:
-  replicaCount: 2
+  replicaCount: 1
   image:
-    repository: 123456789012.dkr.ecr.us-east-1.amazonaws.com/mern-backend
-    tag: latest
+    repository: 121775527711.dkr.ecr.us-east-1.amazonaws.com/mern-backend
+    tag: v1.3
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
@@ -58,18 +58,18 @@ ingress:
   annotations:
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
-    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:us-east-1:123456789012:certificate/xxxxxx"
-    alb.ingress.kubernetes.io/ssl-redirect: "443"
-    alb.ingress.kubernetes.io/healthcheck-path: /health
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+    alb.ingress.kubernetes.io/healthcheck-path: /
     alb.ingress.kubernetes.io/healthcheck-protocol: HTTP
   hosts:
-    - host: mern-app.yourdomain.com
+    - host: task.supdeity.com
       paths:
         - path: /
           pathType: Prefix
           backend: frontend
-        - path: /api
+    - host: api.task.supdeity.com
+      paths:
+        - path: /
           pathType: Prefix
           backend: backend
 
