@@ -2,7 +2,7 @@ name: CI Pipeline - Build & Push
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
     paths:
       - 'application/**'
       - 'helm-charts/**'
