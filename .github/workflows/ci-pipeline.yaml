@@ -100,7 +100,7 @@ jobs:
           echo "======================================"
           echo "Processing Frontend..."
           echo "======================================"
-          npm ci
+          npm install --legacy-peer-deps
           echo "Tests will be added later"
           # npm run test -- --watchAll=false
           # npm run lint
